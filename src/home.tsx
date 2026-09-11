@@ -31,7 +31,7 @@ export function PeakHomeIndicator(props: PeakHomeIndicatorProps) {
       {(info) => (
         <box paddingLeft={1} flexShrink={0}>
           <text fg={peak() ? props.theme.warning : props.theme.success}>
-            {"\u25CF"} Out ${info().value.toFixed(2)}/1M {peak() ? "PEAK" : "OFF-PEAK"}
+            {"\u25CF"} Output ${info().value.toFixed(2)}/1M · {peak() ? "PEAK" : "OFF-PEAK"}
           </text>
         </box>
       )}

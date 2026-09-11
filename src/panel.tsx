@@ -73,7 +73,7 @@ export function PeakPanel(props: PeakPanelProps) {
           </text>
           {/* Current output price for the selected model, amber when peak */}
           <text fg={peak() ? props.theme.warning : props.theme.success}>
-            {"\u25CF"} Out ${info().value.toFixed(2)}/1M {peak() ? "PEAK" : "OFF-PEAK"}
+            {"\u25CF"} Output ${info().value.toFixed(2)}/1M · {peak() ? "PEAK" : "OFF-PEAK"}
           </text>
           <text fg={props.theme.textMuted}>
             UTC {formatMinutes(time())} · {formatMinutes(local())} {city}

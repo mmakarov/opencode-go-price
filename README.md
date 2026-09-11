@@ -12,7 +12,7 @@ output price.
 
 ## Features
 
-- Output price of the **currently selected OpenCode Go model**, e.g. `● Out $1.20/1M PEAK`.
+- Output price of the **currently selected OpenCode Go model**, e.g. `● Output $1.20/1M · PEAK`.
 - DeepSeek peak / off-peak status, next switch and countdown.
 - Local time taken from the machine's timezone (`Intl`), so "Next" is shown in
   your own timezone.
