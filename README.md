@@ -20,7 +20,21 @@ output price.
 
 ## Install
 
-Add it to your TUI config (`~/.config/opencode/tui.json`):
+**From a local clone** (works today): clone this repo and point your TUI config
+(`~/.config/opencode/tui.json`) at the entry file.
+
+```bash
+git clone https://github.com/mmakarov/opencode-go-price
+```
+
+```json
+{
+  "$schema": "https://opencode.ai/tui.json",
+  "plugin": ["/absolute/path/to/opencode-go-price/src/index.tsx"]
+}
+```
+
+**By package name** (after it is published to npm):
 
 ```json
 {
@@ -31,14 +45,6 @@ Add it to your TUI config (`~/.config/opencode/tui.json`):
 
 Restart OpenCode. The indicator appears next to the session prompt; the panel
 appears in the sidebar when it is visible (`ctrl+x b`).
-
-For local development, point at the file entry instead:
-
-```json
-{
-  "plugin": ["/absolute/path/to/opencode-go-price/src/index.tsx"]
-}
-```
 
 ## Peak windows
 
