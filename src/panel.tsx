@@ -6,7 +6,7 @@ import { DAY_LABELS } from "./config.ts"
 import type { TimeRange } from "./types.ts"
 import { usePeakStatus } from "./status.ts"
 import { currentModel, outputPrice } from "./goprice.ts"
-import { batteryLabeled, type GoQuota } from "./quota.ts"
+import { type GoQuota } from "./quota.ts"
 import { Battery } from "./battery.tsx"
 
 export interface PeakPanelProps {

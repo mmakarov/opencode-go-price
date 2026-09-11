@@ -56,13 +56,13 @@ const tui: TuiPlugin = async (api, options) => {
   // Register each slot separately: if a slot name is unknown to this host it
   // must not block the others. Distinct order values avoid the duplicate-order
   // rejection the host applies to separate registrations.
-  const registerSlot = (slotOrder: number, name: string, render: (ctx: any) => unknown) => {
+  const registerSlot = (slotOrder: number, name: string, render: (ctx: any, props: any) => unknown) => {
     try {
       api.slots.register({ order: slotOrder, slots: { [name]: render } } as never)
     } catch (err) {
       api.ui.toast({
         variant: "error",
-        title: "ds-price",
+        title: "opencode-go-price",
         message: `slot ${name} failed: ${(err as Error).message}`,
       })
     }

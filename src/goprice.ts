@@ -64,7 +64,8 @@ export interface CurrentModel {
 }
 
 /** Resolve the model selected for a session, falling back to the config default. */
-export function currentModel(api: TuiPluginApi, sessionID?: string): CurrentModel | undefined {  try {
+export function currentModel(api: TuiPluginApi, sessionID?: string): CurrentModel | undefined {
+  try {
     const session = (api.state.session as { get?: (id: string) => unknown } | undefined)?.get?.(sessionID ?? "")
     const model = (session as { model?: unknown } | undefined)?.model as
       | { id?: string; modelID?: string; providerID?: string }
@@ -93,7 +94,7 @@ export function currentModel(api: TuiPluginApi, sessionID?: string): CurrentMode
         if (!candidate || typeof candidate !== "object") continue
         const record = candidate as Record<string, unknown>
         const providerID = record.providerID
-        const id = record.id ?? record.modelID
+        const id = record.modelID ?? record.id
         if (typeof providerID === "string" && typeof id === "string") return { providerID, id }
       }
       return undefined
