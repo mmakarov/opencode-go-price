@@ -12,8 +12,9 @@ output price.
 
 ## Features
 
-- Rolling **5-hour OpenCode Go limit** as a phone-style battery bar, e.g. `● ██████░░░░ 62%`.
-- The selected model's output price (`$/1M`), colored by peak / off-peak.
+- Rolling **5-hour OpenCode Go limit** as a phone-style battery bar, shown next
+  to the model's output price, e.g. `● ██████░░░░ 62%  $1.20/1M`.
+- The output price (`$/1M`) is colored by peak / off-peak.
 - DeepSeek peak / off-peak status, next switch and countdown.
 - Local time taken from the machine's timezone (`Intl`), so "Next" is shown in
   your own timezone.

@@ -40,11 +40,14 @@ export function PeakHomeIndicator(props: PeakHomeIndicatorProps) {
   return (
     <Show when={model()}>
       {(info) => (
-        <box paddingLeft={1} flexShrink={0}>
+        <box flexDirection="row" paddingLeft={1} flexShrink={0}>
           <text fg={battColor()}>
             {"\u25CF "}
-            {remaining() === undefined ? `$${info().value.toFixed(2)}/1M` : `${battery(remaining()!, 10)} ${Math.round(remaining()!)}%`}
+            {remaining() === undefined
+              ? "\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591 —"
+              : `${battery(remaining()!, 10)} ${Math.round(remaining()!)}%`}
           </text>
+          <text fg={peak() ? props.theme.warning : props.theme.success}>{` $${info().value.toFixed(2)}/1M`}</text>
         </box>
       )}
     </Show>
