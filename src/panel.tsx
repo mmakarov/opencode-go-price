@@ -1,11 +1,12 @@
 /** @jsxImportSource @opentui/solid */
-import { Show } from "solid-js"
+import { Show, getOwner } from "solid-js"
 import type { TuiPluginApi, TuiThemeCurrent } from "@opencode-ai/plugin/tui"
 import { formatDays, formatDuration, formatMinutes, localMinutes } from "./ranges.ts"
 import { DAY_LABELS } from "./config.ts"
 import type { TimeRange } from "./types.ts"
 import { usePeakStatus } from "./status.ts"
-import { currentModel, outputPrice } from "./goprice.ts"
+import { outputPrice } from "./goprice.ts"
+import { selectedModelReader } from "./selected-model.ts"
 import { type GoQuota } from "./quota.ts"
 import { Battery } from "./battery.tsx"
 
@@ -21,13 +22,14 @@ const MS_MIN = 60_000
 
 /** Sidebar panel sized for a narrow column: short lines, no overflowing rows. */
 export function PeakPanel(props: PeakPanelProps) {
+  const selectedModel = selectedModelReader(getOwner())
   const { now, time, status, transition, local, tz } = usePeakStatus(props.ranges)
   const peak = () => status().peak
 
   // Only render for OpenCode Go models that have a known output price.
   const model = () => {
     void now() // re-evaluate on the status tick
-    const current = currentModel(props.api, props.sessionID)
+    const current = selectedModel()
     if (!current || current.providerID !== "opencode-go") return undefined
     const value = outputPrice(current.id, peak())
     if (value === undefined) return undefined
@@ -85,6 +87,7 @@ export function PeakPanel(props: PeakPanelProps) {
   }
 
   return (
+    <box visible={Boolean(model())} flexShrink={0}>
     <Show when={model()}>
       {(info) => (
         <box flexShrink={0} paddingTop={1} paddingBottom={1}>
@@ -94,13 +97,11 @@ export function PeakPanel(props: PeakPanelProps) {
           {/* Remaining 5h limit as a battery, then the bare output price */}
           <box flexDirection="row">
             <text fg={battColor()}>{"\u25CF 5h "}</text>
-            <Show when={remaining()} fallback={<text fg={battColor()}>{"—"}</text>}>
-              {(value) => (
+            <Show when={remaining() !== undefined} fallback={<text fg={battColor()}>{"—"}</text>}>
                 <>
-                  <Battery percent={value()} color={battColor()} theme={props.theme} />
-                  <text fg={battColor()}>{` ${Math.round(value())}%${resetLabel() ? ` · ${resetLabel()}` : ""}`}</text>
+                  <Battery percent={remaining()!} color={battColor()} theme={props.theme} />
+                  <text fg={battColor()}>{` ${Math.round(remaining()!)}%${resetLabel() ? ` · ${resetLabel()}` : ""}`}</text>
                 </>
-              )}
             </Show>
           </box>
           <text fg={peak() ? props.theme.warning : props.theme.success}>
@@ -131,5 +132,6 @@ export function PeakPanel(props: PeakPanelProps) {
         </box>
       )}
     </Show>
+    </box>
   )
 }

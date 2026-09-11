@@ -14,8 +14,11 @@ interface GoConfig {
 }
 
 function readConfig(): GoConfig | undefined {
-  const workspaceId = process.env.OPENCODE_GO_WORKSPACE_ID?.trim()
-  const authCookie = process.env.OPENCODE_GO_AUTH_COOKIE?.trim()
+  const env = (globalThis as typeof globalThis & {
+    process?: { env: Record<string, string | undefined> }
+  }).process?.env
+  const workspaceId = env?.OPENCODE_GO_WORKSPACE_ID?.trim()
+  const authCookie = env?.OPENCODE_GO_AUTH_COOKIE?.trim()
   if (!workspaceId || !authCookie) return undefined
   if (!/^wrk_[A-Za-z0-9_-]+$/.test(workspaceId)) return undefined
   if (authCookie.length < 10) return undefined

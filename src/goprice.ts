@@ -1,5 +1,3 @@
-import type { TuiPluginApi } from "@opencode-ai/plugin/tui"
-
 /**
  * Output prices in USD per 1M tokens for OpenCode Go models.
  * DeepSeek applies a time-based peak rate (about 2x off-peak) on the
@@ -56,64 +54,4 @@ export function outputPrice(modelId: string, peak: boolean): number | undefined 
   const price = GO_OUTPUT_PRICES[normalizeModelId(modelId)]
   if (!price) return undefined
   return peak && price.peak !== undefined ? price.peak : price.off
-}
-
-export interface CurrentModel {
-  providerID: string
-  id: string
-}
-
-/** Resolve the model selected for a session, falling back to the config default. */
-export function currentModel(api: TuiPluginApi, sessionID?: string): CurrentModel | undefined {
-  try {
-    const session = (api.state.session as { get?: (id: string) => unknown } | undefined)?.get?.(sessionID ?? "")
-    const model = (session as { model?: unknown } | undefined)?.model as
-      | { id?: string; modelID?: string; providerID?: string }
-      | string
-      | undefined
-    if (model && typeof model === "object" && model.providerID) {
-      const id = model.id ?? model.modelID
-      if (id) return { providerID: model.providerID, id }
-    }
-    if (typeof model === "string" && model.includes("/")) {
-      const [providerID, id] = model.split("/")
-      return { providerID, id }
-    }
-  } catch {
-    // fall through
-  }
-  try {
-    const session = api.state.session as { messages?: (id: string) => unknown[] }
-    const messages = session.messages?.(sessionID ?? "") ?? []
-    const pick = (value: unknown): CurrentModel | undefined => {
-      if (!value || typeof value !== "object") return undefined
-      const obj = value as Record<string, unknown>
-      const info = obj.info as Record<string, unknown> | undefined
-      const nested = [obj, info, obj.model, info?.model]
-      for (const candidate of nested) {
-        if (!candidate || typeof candidate !== "object") continue
-        const record = candidate as Record<string, unknown>
-        const providerID = record.providerID
-        const id = record.modelID ?? record.id
-        if (typeof providerID === "string" && typeof id === "string") return { providerID, id }
-      }
-      return undefined
-    }
-    for (let i = messages.length - 1; i >= 0; i--) {
-      const found = pick(messages[i])
-      if (found) return found
-    }
-  } catch {
-    // fall through
-  }
-  try {
-    const fallback = (api.state.config as { model?: unknown } | undefined)?.model
-    if (typeof fallback === "string" && fallback.includes("/")) {
-      const [providerID, id] = fallback.split("/")
-      return { providerID, id }
-    }
-  } catch {
-    // ignore
-  }
-  return undefined
 }

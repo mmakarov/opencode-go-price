@@ -1,9 +1,10 @@
 /** @jsxImportSource @opentui/solid */
-import { Show } from "solid-js"
+import { Show, getOwner } from "solid-js"
 import type { TuiPluginApi, TuiThemeCurrent } from "@opencode-ai/plugin/tui"
 import type { TimeRange } from "./types.ts"
 import { usePeakStatus } from "./status.ts"
-import { currentModel, outputPrice } from "./goprice.ts"
+import { outputPrice } from "./goprice.ts"
+import { selectedModelReader } from "./selected-model.ts"
 import { type GoQuota } from "./quota.ts"
 import { Battery } from "./battery.tsx"
 
@@ -17,12 +18,13 @@ export interface PeakHomeIndicatorProps {
 
 /** Compact indicator: rolling 5h battery, hidden for non-Go models. */
 export function PeakHomeIndicator(props: PeakHomeIndicatorProps) {
+  const selectedModel = selectedModelReader(getOwner())
   const { status } = usePeakStatus(props.ranges)
   const peak = () => status().peak
 
   const model = () => {
     void status() // re-evaluate on the status tick
-    const current = currentModel(props.api, props.sessionID)
+    const current = selectedModel()
     if (!current || current.providerID !== "opencode-go") return undefined
     const value = outputPrice(current.id, peak())
     if (value === undefined) return undefined
@@ -39,21 +41,21 @@ export function PeakHomeIndicator(props: PeakHomeIndicatorProps) {
   }
 
   return (
+    <box visible={Boolean(model())} flexShrink={0}>
     <Show when={model()}>
       {(info) => (
         <box flexDirection="row" paddingLeft={1} flexShrink={0}>
           <text fg={peak() ? props.theme.warning : props.theme.success}>{`$${info().value.toFixed(2)}`}</text>
           <text fg={battColor()}>{" \u25CF 5h "}</text>
-          <Show when={remaining()} fallback={<text fg={battColor()}>{"—"}</text>}>
-            {(value) => (
+          <Show when={remaining() !== undefined} fallback={<text fg={battColor()}>{"—"}</text>}>
               <>
-                <Battery percent={value()} color={battColor()} theme={props.theme} />
-                <text fg={battColor()}>{` ${Math.round(value())}%`}</text>
+                <Battery percent={remaining()!} color={battColor()} theme={props.theme} />
+                <text fg={battColor()}>{` ${Math.round(remaining()!)}%`}</text>
               </>
-            )}
           </Show>
         </box>
       )}
     </Show>
+    </box>
   )
 }

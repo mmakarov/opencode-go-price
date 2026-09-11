@@ -63,6 +63,23 @@ git clone https://github.com/mmakarov/opencode-go-price
 Restart OpenCode. The indicator appears next to the session prompt; the panel
 appears in the sidebar when it is visible (`ctrl+x b`).
 
+## Model selection compatibility
+
+On OpenCode 1.18.30 the composer selection lives in `LocalProvider`, while the
+public plugin state exposes saved sessions and messages. The adapter in
+`src/selected-model.ts` reads that local reactive context from the mounted slot.
+It follows model and agent changes before submission, without consulting old
+messages or the shared recent-models file. Non-Go selections hide both widgets;
+switching back to Go restores them. If the host's context shape changes, the
+widgets hide instead of showing a stale price. This adapter depends on internals
+of [OpenCode v1.18.30](https://github.com/anomalyco/opencode/blob/v1.18.30/packages/tui/src/context/local.tsx).
+
+Regression checks (Node with TypeScript stripping support):
+
+```bash
+node --conditions=browser --test tests/selected-model.test.mjs
+```
+
 ## Peak windows
 
 Default DeepSeek schedule (UTC): `01:00-04:00` and `06:00-10:00`, Monday to
