@@ -30,7 +30,15 @@ interface WindowUsage {
   resetInSec: number
 }
 
-export async function fetchGoQuota(): Promise<GoQuota | undefined> {
+/** Thrown when the Go auth cookie is missing, expired, or rejected. */
+export class QuotaAuthError extends Error {}
+
+function timeoutSignal(ms: number): AbortSignal | undefined {
+  const withTimeout = AbortSignal as typeof AbortSignal & { timeout?: (ms: number) => AbortSignal }
+  return typeof withTimeout.timeout === "function" ? withTimeout.timeout(ms) : undefined
+}
+
+export async function fetchGoQuota(signal?: AbortSignal): Promise<GoQuota | undefined> {
   const config = readConfig()
   if (!config) return undefined
   const response = await fetch(
@@ -41,8 +49,12 @@ export async function fetchGoQuota(): Promise<GoQuota | undefined> {
         Cookie: `auth=${config.authCookie}`,
         "User-Agent": "opencode-go-price/0.1.0",
       },
+      signal,
     },
   )
+  if (response.status === 401 || response.status === 403) {
+    throw new QuotaAuthError(`OpenCode Go authentication failed (HTTP ${response.status})`)
+  }
   if (!response.ok) throw new Error(`OpenCode Go request failed with HTTP ${response.status}`)
   const html = await response.text()
   const rolling = extractWindow(html, "rollingUsage")
@@ -150,25 +162,50 @@ function escapeRegExp(value: string): string {
 }
 
 /**
- * Reactive quota holder with a periodic refresh. Must be created inside the
- * plugin factory so it is disposed with the plugin scope.
+ * Reactive quota holder with a periodic refresh. Created inside the plugin
+ * factory so it is disposed with the plugin scope. The first request is lazy:
+ * call `ensure()` once a Go model is on screen. Requests are serialized and
+ * time-bounded, so a hung server cannot pile up overlapping fetches; an auth
+ * failure clears the value instead of showing a stale quota forever.
  */
-export function createQuotaStore(refreshMs = 120_000): {
+export function createQuotaStore(refreshMs = 120_000, timeoutMs = 15_000): {
   quota: () => GoQuota | undefined
-  refresh: () => void
+  ensure: () => void
   dispose: () => void
 } {
   const [quota, setQuota] = createSignal<GoQuota | undefined>(undefined)
-  const refresh = () => {
-    fetchGoQuota()
-      .then((value) => {
-        if (value) setQuota(value)
-      })
-      .catch(() => {
-        // keep the last known value on transient errors
-      })
+  let inFlight = false
+  let started = false
+  let disposed = false
+  let timer: ReturnType<typeof setInterval> | undefined
+
+  const fetchOnce = async () => {
+    if (inFlight || disposed) return
+    inFlight = true
+    try {
+      const value = await fetchGoQuota(timeoutSignal(timeoutMs))
+      if (value) setQuota(value)
+    } catch (error) {
+      // Keep the last value on transient/network/timeout errors, but drop it
+      // when authentication fails so an expired cookie is visible.
+      if (error instanceof QuotaAuthError) setQuota(undefined)
+    } finally {
+      inFlight = false
+    }
   }
-  refresh()
-  const timer = setInterval(refresh, refreshMs)
-  return { quota, refresh, dispose: () => clearInterval(timer) }
+
+  const ensure = () => {
+    if (disposed || started) return
+    started = true
+    void fetchOnce()
+    timer = setInterval(() => void fetchOnce(), refreshMs)
+  }
+
+  const dispose = () => {
+    disposed = true
+    if (timer) clearInterval(timer)
+    timer = undefined
+  }
+
+  return { quota, ensure, dispose }
 }

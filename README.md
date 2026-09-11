@@ -77,7 +77,7 @@ of [OpenCode v1.18.30](https://github.com/anomalyco/opencode/blob/v1.18.30/packa
 Regression checks (Node with TypeScript stripping support):
 
 ```bash
-node --conditions=browser --test tests/selected-model.test.mjs
+npm test
 ```
 
 ## Peak windows

@@ -69,13 +69,13 @@ const tui: TuiPlugin = async (api, options) => {
   }
 
   registerSlot(order, "sidebar_content", (ctx: any, props: any) => (
-    <PeakPanel theme={ctx.theme.current} ranges={ranges} api={api} sessionID={props?.session_id} quota={quotaStore.quota} />
+    <PeakPanel theme={ctx.theme.current} ranges={ranges} api={api} sessionID={props?.session_id} quota={quotaStore.quota} ensureQuota={quotaStore.ensure} />
   ))
   registerSlot(order + 1, "home_prompt_right", (ctx: any) => (
-    <PeakHomeIndicator theme={ctx.theme.current} ranges={ranges} api={api} quota={quotaStore.quota} />
+    <PeakHomeIndicator theme={ctx.theme.current} ranges={ranges} api={api} quota={quotaStore.quota} ensureQuota={quotaStore.ensure} />
   ))
   registerSlot(order + 2, "session_prompt_right", (ctx: any, props: any) => (
-    <PeakHomeIndicator theme={ctx.theme.current} ranges={ranges} api={api} sessionID={props?.session_id} quota={quotaStore.quota} />
+    <PeakHomeIndicator theme={ctx.theme.current} ranges={ranges} api={api} sessionID={props?.session_id} quota={quotaStore.quota} ensureQuota={quotaStore.ensure} />
   ))
 
   // Back the /dspeak command with the config menu dialogs.

@@ -26,9 +26,16 @@
   },
   "files": [
     "src",
+    "assets",
     "README.md",
     "LICENSE"
   ],
+  "scripts": {
+    "test": "node --conditions=browser --test tests/*.test.mjs"
+  },
+  "engines": {
+    "opencode": "^1.18.0"
+  },
   "dependencies": {
     "@opentui/core": "^0.5.4",
     "@opentui/solid": "^0.5.4",

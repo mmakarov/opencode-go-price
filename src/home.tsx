@@ -1,5 +1,5 @@
 /** @jsxImportSource @opentui/solid */
-import { Show, getOwner } from "solid-js"
+import { createEffect, Show, getOwner } from "solid-js"
 import type { TuiPluginApi, TuiThemeCurrent } from "@opencode-ai/plugin/tui"
 import type { TimeRange } from "./types.ts"
 import { usePeakStatus } from "./status.ts"
@@ -14,6 +14,7 @@ export interface PeakHomeIndicatorProps {
   api: TuiPluginApi
   sessionID?: string
   quota: () => GoQuota | undefined
+  ensureQuota: () => void
 }
 
 /** Compact indicator: rolling 5h battery, hidden for non-Go models. */
@@ -39,6 +40,11 @@ export function PeakHomeIndicator(props: PeakHomeIndicatorProps) {
     if (value >= 20) return props.theme.warning
     return props.theme.error ?? props.theme.warning
   }
+
+  // Start the lazy quota fetch only once a Go model is actually shown.
+  createEffect(() => {
+    if (model()) props.ensureQuota()
+  })
 
   return (
     <box visible={Boolean(model())} flexShrink={0}>

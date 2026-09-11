@@ -1,5 +1,5 @@
 /** @jsxImportSource @opentui/solid */
-import { Show, getOwner } from "solid-js"
+import { createEffect, Show, getOwner } from "solid-js"
 import type { TuiPluginApi, TuiThemeCurrent } from "@opencode-ai/plugin/tui"
 import { formatDays, formatDuration, formatMinutes, localMinutes } from "./ranges.ts"
 import { DAY_LABELS } from "./config.ts"
@@ -16,6 +16,7 @@ export interface PeakPanelProps {
   api: TuiPluginApi
   sessionID?: string
   quota: () => GoQuota | undefined
+  ensureQuota: () => void
 }
 
 const MS_MIN = 60_000
@@ -85,6 +86,11 @@ export function PeakPanel(props: PeakPanelProps) {
     if (value >= 20) return props.theme.warning
     return props.theme.error ?? props.theme.warning
   }
+
+  // Start the lazy quota fetch only once a Go model is actually shown.
+  createEffect(() => {
+    if (model()) props.ensureQuota()
+  })
 
   return (
     <box visible={Boolean(model())} flexShrink={0}>
