@@ -93,8 +93,8 @@ export function PeakPanel(props: PeakPanelProps) {
           </text>
           {/* Remaining 5h limit as a battery, then the bare output price */}
           <box flexDirection="row">
-            <text fg={battColor()}>{"\u25CF "}</text>
-            <Show when={remaining()} fallback={<text fg={battColor()}>{"5h —"}</text>}>
+            <text fg={battColor()}>{"\u25CF 5h "}</text>
+            <Show when={remaining()} fallback={<text fg={battColor()}>{"—"}</text>}>
               {(value) => (
                 <>
                   <Battery percent={value()} color={battColor()} theme={props.theme} />

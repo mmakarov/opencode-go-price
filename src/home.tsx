@@ -43,8 +43,8 @@ export function PeakHomeIndicator(props: PeakHomeIndicatorProps) {
       {(info) => (
         <box flexDirection="row" paddingLeft={1} flexShrink={0}>
           <text fg={peak() ? props.theme.warning : props.theme.success}>{`$${info().value.toFixed(2)}`}</text>
-          <text fg={battColor()}>{" \u25CF "}</text>
-          <Show when={remaining()} fallback={<text fg={battColor()}>{"5h —"}</text>}>
+          <text fg={battColor()}>{" \u25CF 5h "}</text>
+          <Show when={remaining()} fallback={<text fg={battColor()}>{"—"}</text>}>
             {(value) => (
               <>
                 <Battery percent={value()} color={battColor()} theme={props.theme} />

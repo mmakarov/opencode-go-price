@@ -8,30 +8,20 @@ export interface BatteryProps {
   color: unknown
   theme: TuiThemeCurrent
   width?: number
-  label?: string
 }
 
 /**
- * Phone-style battery bar. The centered label is drawn in the bar's own color,
- * so the bar stays continuous without a separate label block.
+ * Phone-style battery: a solid block bar. The filled part uses `color`, the
+ * rest is a dim block, so the bar reads as one continuous segment.
  */
 export function Battery(props: BatteryProps) {
   const width = () => props.width ?? 10
-  const label = () => props.label ?? "5h"
   const filled = () => Math.round((Math.max(0, Math.min(100, props.percent)) / 100) * width())
-  const start = () => Math.max(0, Math.floor((width() - label().length) / 2))
   const cells = () =>
-    Array.from({ length: width() }, (_, index) => {
-      const isFilled = index < filled()
-      const labelIndex = index - start()
-      const segmentColor = isFilled ? props.color : props.theme.textMuted
-      const isLabel = labelIndex >= 0 && labelIndex < label().length
-      return {
-        // The label is drawn in the bar's own color so the bar stays continuous.
-        char: isLabel ? label()[labelIndex] : isFilled ? "\u2588" : "\u2591",
-        fg: segmentColor,
-      }
-    })
+    Array.from({ length: width() }, (_, index) => ({
+      char: "\u2588",
+      fg: index < filled() ? props.color : props.theme.textMuted,
+    }))
 
   return (
     <box flexDirection="row">
