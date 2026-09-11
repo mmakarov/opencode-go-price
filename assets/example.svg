@@ -4,13 +4,13 @@
   <circle cx="20" cy="18" r="6" fill="#ff5f56"/>
   <circle cx="42" cy="18" r="6" fill="#ffbd2e"/>
   <circle cx="64" cy="18" r="6" fill="#27c93f"/>
-  <text x="460" y="23" fill="#8b949e" font-size="13" text-anchor="middle">rayban — opencode-go-price</text>
+  <text x="460" y="23" fill="#8b949e" font-size="13" text-anchor="middle">opencode-go-price</text>
   <line x1="600" y1="36" x2="600" y2="440" stroke="#30363d"/>
 
-  <text x="24" y="84" fill="#8b949e" font-size="14">&gt; Собрал пакет для публикации плагина.</text>
-  <text x="24" y="110" fill="#8b949e" font-size="14">&gt; Инициализирую git и коммичу.</text>
-  <text x="24" y="136" fill="#8b949e" font-size="14">&gt; Создаю репозиторий на GitHub.</text>
-  <text x="24" y="162" fill="#8b949e" font-size="14">  Готово: github.com/mmakarov/opencode-go-price</text>
+  <text x="24" y="84" fill="#8b949e" font-size="14">&gt; Building the release package.</text>
+  <text x="24" y="110" fill="#8b949e" font-size="14">&gt; Initializing git and committing.</text>
+  <text x="24" y="136" fill="#8b949e" font-size="14">&gt; Creating the GitHub repository.</text>
+  <text x="24" y="162" fill="#8b949e" font-size="14">  Done: github.com/mmakarov/opencode-go-price</text>
 
   <rect x="20" y="336" width="560" height="52" rx="6" fill="#161b22" stroke="#30363d"/>
   <text x="36" y="360" fill="#d29922" font-size="14">● Out $1.20/1M PEAK</text>
