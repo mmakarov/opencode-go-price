@@ -8,6 +8,8 @@ It is forked from [`ds-peak-warningx`](https://github.com/Bashar-AlGhada/opencod
 by [Bashar](https://github.com/Bashar-AlGhada) (MIT) and adds the per-model
 output price.
 
+![Example](assets/example.svg)
+
 ## Features
 
 - Output price of the **currently selected OpenCode Go model**, e.g. `● Out $1.20/1M PEAK`.
