@@ -6,7 +6,7 @@ import { DAY_LABELS } from "./config.ts"
 import type { TimeRange } from "./types.ts"
 import { usePeakStatus } from "./status.ts"
 import { currentModel, outputPrice } from "./goprice.ts"
-import { battery, type GoQuota } from "./quota.ts"
+import { batteryLabeled, type GoQuota } from "./quota.ts"
 
 export interface PeakPanelProps {
   theme: TuiThemeCurrent
@@ -92,12 +92,12 @@ export function PeakPanel(props: PeakPanelProps) {
           </text>
           {/* Remaining 5h limit as a battery, then the bare output price */}
           <text fg={battColor()}>
-            {"\u25CF"} {remaining() === undefined ? "\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591" : battery(remaining()!, 10)}
-            {remaining() === undefined ? " —" : ` ${Math.round(remaining()!)}%`}
+            {"\u25CF "}
+            {remaining() === undefined ? "5h —" : `${batteryLabeled(remaining()!, 10)} ${Math.round(remaining()!)}%`}
             {resetLabel() ? ` · ${resetLabel()}` : ""}
           </text>
           <text fg={peak() ? props.theme.warning : props.theme.success}>
-            ${info().value.toFixed(2)}/1M
+            ${info().value.toFixed(2)}
           </text>
           <text fg={props.theme.textMuted}>
             UTC {formatMinutes(time())} · {formatMinutes(local())} {city}

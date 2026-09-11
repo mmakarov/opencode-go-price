@@ -58,6 +58,14 @@ export function battery(percent: number, width = 10): string {
   return "\u2588".repeat(filled) + "\u2591".repeat(width - filled)
 }
 
+/** Battery bar with a label printed on it, e.g. "██████5h░░░░". */
+export function batteryLabeled(percent: number, width = 10, label = "5h"): string {
+  const p = Math.max(0, Math.min(100, percent))
+  const filled = Math.round((p / 100) * width)
+  const empty = Math.max(0, width - filled)
+  return "\u2588".repeat(filled) + label + "\u2591".repeat(empty)
+}
+
 export function remainingColor(percent: number, theme: { success?: unknown; warning?: unknown }): unknown {
   return percent >= 50 ? theme.success : theme.warning
 }

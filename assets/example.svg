@@ -13,13 +13,16 @@
   <text x="24" y="162" fill="#8b949e" font-size="14">  Done: github.com/mmakarov/opencode-go-price</text>
 
   <rect x="20" y="336" width="560" height="52" rx="6" fill="#161b22" stroke="#30363d"/>
-  <text x="36" y="360" fill="#3fb950" font-size="14">● ███████░░░ 71%</text>
+  <text x="36" y="360" font-size="14">
+    <tspan fill="#d29922">$1.20</tspan>
+    <tspan fill="#3fb950"> ● ███████5h░░░ 71%</tspan>
+  </text>
   <text x="36" y="380" fill="#8b949e" font-size="12">Build · DeepSeek V4.1 Flash  OpenCode Go</text>
 
   <text x="624" y="86" fill="#e6edf3" font-size="15" font-weight="bold">opencode-go-price</text>
   <text x="624" y="120" fill="#e6edf3" font-size="14">deepseek-v4.1-flash</text>
-  <text x="624" y="146" fill="#3fb950" font-size="14">● ███████░░░ 71% · 3h 47m</text>
-  <text x="624" y="172" fill="#d29922" font-size="13">$1.20/1M</text>
+  <text x="624" y="146" fill="#3fb950" font-size="14">● ███████5h░░░ 71% · 3h 47m</text>
+  <text x="624" y="172" fill="#d29922" font-size="13">$1.20</text>
   <text x="624" y="198" fill="#8b949e" font-size="13">UTC 08:12 · 12:12 Samara</text>
   <text x="624" y="224" fill="#8b949e" font-size="13">Next: off-peak 14:00 Samara</text>
   <text x="624" y="256" fill="#8b949e" font-size="13">Windows (UTC):</text>
