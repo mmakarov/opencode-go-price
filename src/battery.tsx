@@ -11,12 +11,9 @@ export interface BatteryProps {
   label?: string
 }
 
-const BLACK = "#000000"
-const WHITE = "#ffffff"
-
 /**
- * Phone-style battery bar. The centered label sits on the bar; each label
- * character keeps its segment's background with a contrasting text color.
+ * Phone-style battery bar. The centered label is drawn in the bar's own color,
+ * so the bar stays continuous without a separate label block.
  */
 export function Battery(props: BatteryProps) {
   const width = () => props.width ?? 10
@@ -28,26 +25,18 @@ export function Battery(props: BatteryProps) {
       const isFilled = index < filled()
       const labelIndex = index - start()
       const segmentColor = isFilled ? props.color : props.theme.textMuted
-      if (labelIndex >= 0 && labelIndex < label().length) {
-        return {
-          char: label()[labelIndex],
-          fg: isFilled ? BLACK : WHITE,
-          bg: segmentColor,
-        }
-      }
+      const isLabel = labelIndex >= 0 && labelIndex < label().length
       return {
-        char: isFilled ? "\u2588" : "\u2591",
+        // The label is drawn in the bar's own color so the bar stays continuous.
+        char: isLabel ? label()[labelIndex] : isFilled ? "\u2588" : "\u2591",
         fg: segmentColor,
-        bg: undefined as unknown,
       }
     })
 
   return (
     <box flexDirection="row">
       {cells().map((cell) => (
-        <text fg={cell.fg} bg={cell.bg}>
-          {cell.char}
-        </text>
+        <text fg={cell.fg}>{cell.char}</text>
       ))}
     </box>
   )
