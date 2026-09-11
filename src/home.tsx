@@ -4,7 +4,8 @@ import type { TuiPluginApi, TuiThemeCurrent } from "@opencode-ai/plugin/tui"
 import type { TimeRange } from "./types.ts"
 import { usePeakStatus } from "./status.ts"
 import { currentModel, outputPrice } from "./goprice.ts"
-import { batteryLabeled, type GoQuota } from "./quota.ts"
+import { type GoQuota } from "./quota.ts"
+import { Battery } from "./battery.tsx"
 
 export interface PeakHomeIndicatorProps {
   theme: TuiThemeCurrent
@@ -42,10 +43,15 @@ export function PeakHomeIndicator(props: PeakHomeIndicatorProps) {
       {(info) => (
         <box flexDirection="row" paddingLeft={1} flexShrink={0}>
           <text fg={peak() ? props.theme.warning : props.theme.success}>{`$${info().value.toFixed(2)}`}</text>
-          <text fg={battColor()}>
-            {" \u25CF "}
-            {remaining() === undefined ? "5h —" : `${batteryLabeled(remaining()!, 10)} ${Math.round(remaining()!)}%`}
-          </text>
+          <text fg={battColor()}>{" \u25CF "}</text>
+          <Show when={remaining()} fallback={<text fg={battColor()}>{"5h —"}</text>}>
+            {(value) => (
+              <>
+                <Battery percent={value()} color={battColor()} theme={props.theme} />
+                <text fg={battColor()}>{` ${Math.round(value())}%`}</text>
+              </>
+            )}
+          </Show>
         </box>
       )}
     </Show>

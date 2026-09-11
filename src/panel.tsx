@@ -7,6 +7,7 @@ import type { TimeRange } from "./types.ts"
 import { usePeakStatus } from "./status.ts"
 import { currentModel, outputPrice } from "./goprice.ts"
 import { batteryLabeled, type GoQuota } from "./quota.ts"
+import { Battery } from "./battery.tsx"
 
 export interface PeakPanelProps {
   theme: TuiThemeCurrent
@@ -91,11 +92,17 @@ export function PeakPanel(props: PeakPanelProps) {
             <b>{info().id}</b>
           </text>
           {/* Remaining 5h limit as a battery, then the bare output price */}
-          <text fg={battColor()}>
-            {"\u25CF "}
-            {remaining() === undefined ? "5h —" : `${batteryLabeled(remaining()!, 10)} ${Math.round(remaining()!)}%`}
-            {resetLabel() ? ` · ${resetLabel()}` : ""}
-          </text>
+          <box flexDirection="row">
+            <text fg={battColor()}>{"\u25CF "}</text>
+            <Show when={remaining()} fallback={<text fg={battColor()}>{"5h —"}</text>}>
+              {(value) => (
+                <>
+                  <Battery percent={value()} color={battColor()} theme={props.theme} />
+                  <text fg={battColor()}>{` ${Math.round(value())}%${resetLabel() ? ` · ${resetLabel()}` : ""}`}</text>
+                </>
+              )}
+            </Show>
+          </box>
           <text fg={peak() ? props.theme.warning : props.theme.success}>
             ${info().value.toFixed(2)}
           </text>
