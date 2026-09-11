@@ -1,0 +1,45 @@
+{
+  "name": "opencode-go-price",
+  "version": "0.1.0",
+  "description": "OpenCode TUI plugin: shows the current OpenCode Go model's output price and DeepSeek peak/off-peak windows.",
+  "keywords": [
+    "opencode",
+    "opencode-go",
+    "tui",
+    "plugin",
+    "deepseek",
+    "pricing"
+  ],
+  "license": "MIT",
+  "author": "Maksim Makarov",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mmakarov/opencode-go-price.git"
+  },
+  "homepage": "https://github.com/mmakarov/opencode-go-price",
+  "bugs": {
+    "url": "https://github.com/mmakarov/opencode-go-price/issues"
+  },
+  "type": "module",
+  "exports": {
+    "./tui": "./src/index.tsx"
+  },
+  "files": [
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "dependencies": {
+    "@opentui/core": "^0.5.4",
+    "@opentui/solid": "^0.5.4",
+    "solid-js": "^1.9.0"
+  },
+  "peerDependencies": {
+    "@opencode-ai/plugin": "^1.18.0"
+  },
+  "peerDependenciesMeta": {
+    "@opencode-ai/plugin": {
+      "optional": true
+    }
+  }
+}
