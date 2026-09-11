@@ -12,13 +12,27 @@ output price.
 
 ## Features
 
-- Output price of the **currently selected OpenCode Go model**, e.g. `● Output $1.20/1M · PEAK`.
+- Rolling **5-hour OpenCode Go limit** as a phone-style battery bar, e.g. `● ██████░░░░ 62%`.
+- The selected model's output price (`$/1M`), colored by peak / off-peak.
 - DeepSeek peak / off-peak status, next switch and countdown.
 - Local time taken from the machine's timezone (`Intl`), so "Next" is shown in
   your own timezone.
 - Hidden automatically when the active model is **not** served by `opencode-go`
   (or has no known price).
 - Peak windows are editable in-app with `/dspeak` and persist across restarts.
+
+## Quota
+
+The battery reads your OpenCode Go credentials from the environment (same
+variables as `@whosydd/opencode-quota`):
+
+```bash
+export OPENCODE_GO_WORKSPACE_ID="wrk_..."
+export OPENCODE_GO_AUTH_COOKIE="Fe26.2**..."
+```
+
+Without them the indicator falls back to the model's output price. The values
+are the ones from your browser session on <https://opencode.ai/auth>.
 
 ## Install
 

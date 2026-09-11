@@ -6,12 +6,14 @@ import { DAY_LABELS } from "./config.ts"
 import type { TimeRange } from "./types.ts"
 import { usePeakStatus } from "./status.ts"
 import { currentModel, outputPrice } from "./goprice.ts"
+import { battery, type GoQuota } from "./quota.ts"
 
 export interface PeakPanelProps {
   theme: TuiThemeCurrent
   ranges: () => TimeRange[]
   api: TuiPluginApi
   sessionID?: string
+  quota: () => GoQuota | undefined
 }
 
 const MS_MIN = 60_000
@@ -64,6 +66,23 @@ export function PeakPanel(props: PeakPanelProps) {
   // Minutes until the next flip (the scan aligns to whole minutes).
   const untilLabel = () => formatDuration(Math.round((transition().at.getTime() - now().getTime()) / MS_MIN))
 
+  // Rolling 5h quota as a battery bar.
+  const remaining = () => {
+    void now()
+    return props.quota()?.rollingPercentRemaining
+  }
+  const resetLabel = () => {
+    const seconds = props.quota()?.rollingResetInSec
+    return seconds === undefined ? "" : formatDuration(Math.round(seconds / 60))
+  }
+  const battColor = () => {
+    const value = remaining()
+    if (value === undefined) return props.theme.textMuted
+    if (value >= 50) return props.theme.success
+    if (value >= 20) return props.theme.warning
+    return props.theme.error ?? props.theme.warning
+  }
+
   return (
     <Show when={model()}>
       {(info) => (
@@ -71,9 +90,14 @@ export function PeakPanel(props: PeakPanelProps) {
           <text fg={props.theme.text}>
             <b>{info().id}</b>
           </text>
-          {/* Current output price for the selected model, amber when peak */}
+          {/* Remaining 5h limit as a battery, then the bare output price */}
+          <text fg={battColor()}>
+            {"\u25CF"} {remaining() === undefined ? "\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591" : battery(remaining()!, 10)}
+            {remaining() === undefined ? " —" : ` ${Math.round(remaining()!)}%`}
+            {resetLabel() ? ` · ${resetLabel()}` : ""}
+          </text>
           <text fg={peak() ? props.theme.warning : props.theme.success}>
-            {"\u25CF"} Output ${info().value.toFixed(2)}/1M · {peak() ? "PEAK" : "OFF-PEAK"}
+            ${info().value.toFixed(2)}/1M
           </text>
           <text fg={props.theme.textMuted}>
             UTC {formatMinutes(time())} · {formatMinutes(local())} {city}

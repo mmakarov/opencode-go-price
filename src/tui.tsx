@@ -7,6 +7,7 @@ import type { DsPeakOptions, TimeRange } from "./types.ts"
 import { openConfigMenu } from "./dialogs.tsx"
 import { PeakPanel } from "./panel.tsx"
 import { PeakHomeIndicator } from "./home.tsx"
+import { createQuotaStore } from "./quota.ts"
 
 /**
  * Resolve the effective peak windows. Each entry may carry a day-of-week
@@ -48,6 +49,10 @@ const tui: TuiPlugin = async (api, options) => {
 
   const order = typeof opts.order === "number" ? opts.order : DEFAULT_SLOT_ORDER
 
+  // Rolling 5h quota (battery). Disposed with the plugin scope.
+  const quotaStore = createQuotaStore()
+  api.lifecycle.onDispose(() => quotaStore.dispose())
+
   // Register each slot separately: if a slot name is unknown to this host it
   // must not block the others. Distinct order values avoid the duplicate-order
   // rejection the host applies to separate registrations.
@@ -64,13 +69,13 @@ const tui: TuiPlugin = async (api, options) => {
   }
 
   registerSlot(order, "sidebar_content", (ctx: any, props: any) => (
-    <PeakPanel theme={ctx.theme.current} ranges={ranges} api={api} sessionID={props?.session_id} />
+    <PeakPanel theme={ctx.theme.current} ranges={ranges} api={api} sessionID={props?.session_id} quota={quotaStore.quota} />
   ))
   registerSlot(order + 1, "home_prompt_right", (ctx: any) => (
-    <PeakHomeIndicator theme={ctx.theme.current} ranges={ranges} api={api} />
+    <PeakHomeIndicator theme={ctx.theme.current} ranges={ranges} api={api} quota={quotaStore.quota} />
   ))
   registerSlot(order + 2, "session_prompt_right", (ctx: any, props: any) => (
-    <PeakHomeIndicator theme={ctx.theme.current} ranges={ranges} api={api} sessionID={props?.session_id} />
+    <PeakHomeIndicator theme={ctx.theme.current} ranges={ranges} api={api} sessionID={props?.session_id} quota={quotaStore.quota} />
   ))
 
   // Back the /dspeak command with the config menu dialogs.
