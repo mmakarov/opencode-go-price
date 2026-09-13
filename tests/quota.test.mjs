@@ -65,6 +65,57 @@ test('auth failure clears the previously shown quota', async () => {
   }
 })
 
+test('API key path calls /zen/go/v1/usage and maps percent to remaining', async () => {
+  const saved = { ...process.env }
+  try {
+    for (const key of Object.keys(ENV)) delete process.env[key]
+    process.env.OPENCODE_GO_API_KEY = 'sk-test'
+    await withFetch(
+      async () =>
+        new Response(
+          JSON.stringify({
+            usage: {
+              rolling: { status: 'ok', percent: 10, resetsAt: new Date(Date.now() + 3_600_000).toISOString() },
+              weekly: { status: 'ok', percent: 42, resetsAt: new Date(Date.now() + 7_200_000).toISOString() },
+            },
+          }),
+          { status: 200, headers: { 'content-type': 'application/json' } },
+        ),
+      async (calls) => {
+        const quota = await fetchGoQuota()
+        assert.equal(quota?.rollingPercentRemaining, 90)
+        assert.ok(quota.rollingResetInSec > 3_500 && quota.rollingResetInSec <= 3_600)
+        assert.match(String(calls[0].url), /\/zen\/go\/v1\/usage$/)
+        assert.equal(calls[0].init.headers.Authorization, 'Bearer sk-test')
+      },
+    )
+  } finally {
+    for (const key of Object.keys(ENV)) delete process.env[key]
+    delete process.env.OPENCODE_GO_API_KEY
+    Object.assign(process.env, saved)
+  }
+})
+
+test('cookie redirect to the OpenAuth login page is an auth failure', async () => {
+  const saved = { ...process.env }
+  Object.assign(process.env, ENV)
+  delete process.env.OPENCODE_GO_API_KEY
+  const login = new Response('log in', { status: 200 })
+  Object.defineProperty(login, 'redirected', { value: true })
+  Object.defineProperty(login, 'url', { value: 'https://auth.opencode.ai/authorize?client_id=app' })
+  try {
+    await withFetch(
+      async () => login,
+      async () => {
+        await assert.rejects(() => fetchGoQuota(), QuotaAuthError)
+      },
+    )
+  } finally {
+    for (const key of Object.keys(ENV)) delete process.env[key]
+    Object.assign(process.env, saved)
+  }
+})
+
 test('fetchGoQuota throws QuotaAuthError on 401 and skips without credentials', async () => {
   const saved = { ...process.env }
   try {

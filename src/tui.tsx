@@ -33,9 +33,52 @@ function loadRanges(api: TuiPluginApi, opts: Partial<DsPeakOptions>): TimeRange[
   return DEFAULT_RANGES.map((r) => ({ ...r, days: r.days ? [...r.days] : undefined }))
 }
 
+/**
+ * Resolve the OpenCode Go provider API key so the quota battery can use the
+ * stable `/zen/go/v1/usage` API instead of the short-lived browser cookie.
+ * Order: live provider state, an explicit env override, then auth.json on disk.
+ */
+async function resolveGoApiKey(api: TuiPluginApi): Promise<string | undefined> {
+  const env = (globalThis as typeof globalThis & {
+    process?: { env: Record<string, string | undefined> }
+  }).process?.env
+  try {
+    const provider = api.state.provider.find((entry) => entry.id === "opencode-go")
+    if (provider?.key) return provider.key
+  } catch {
+    // provider state may be unavailable early in startup
+  }
+  if (env?.OPENCODE_GO_API_KEY) return env.OPENCODE_GO_API_KEY
+  try {
+    const [{ existsSync, readFileSync }, path, os] = await Promise.all([
+      import("node:fs"),
+      import("node:path"),
+      import("node:os"),
+    ])
+    const dataDir = env?.XDG_DATA_HOME
+      ? path.join(env.XDG_DATA_HOME, "opencode")
+      : path.join(os.homedir(), ".local", "share", "opencode")
+    const file = path.join(dataDir, "auth.json")
+    if (!existsSync(file)) return undefined
+    const parsed = JSON.parse(readFileSync(file, "utf8")) as Record<string, { type?: string; key?: string }>
+    const entry = parsed["opencode-go"]
+    if (entry?.type === "api" && typeof entry.key === "string" && entry.key) return entry.key
+  } catch {
+    // no API key on disk; fall back to the cookie path in quota.ts
+  }
+  return undefined
+}
+
 const tui: TuiPlugin = async (api, options) => {
   const opts = (options ?? {}) as Partial<DsPeakOptions>
   const [ranges, setRanges] = createSignal<TimeRange[]>(loadRanges(api, opts))
+
+  // Prefer the durable API key for the quota battery (cookie is the fallback).
+  const proc = (globalThis as typeof globalThis & {
+    process?: { env: Record<string, string | undefined> }
+  }).process
+  const apiKey = await resolveGoApiKey(api)
+  if (apiKey && proc && !proc.env.OPENCODE_GO_API_KEY) proc.env.OPENCODE_GO_API_KEY = apiKey
 
   // Update in-memory state and persist to KV so edits survive restarts.
   const save = (next: TimeRange[]) => {

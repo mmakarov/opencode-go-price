@@ -1,5 +1,10 @@
 // OpenCode Go quota fetch + a phone-style battery bar.
-// Mirrors the request/parse used by @whosydd/opencode-quota (MIT).
+//
+// Primary path: the OpenCode Go API with the provider API key from
+// `opencode auth` (auth.json). The key is stable, so the battery keeps working
+// for months, unlike the browser `auth` cookie which expires after a few days.
+// Fallback path: scrape the workspace page with OPENCODE_GO_AUTH_COOKIE, kept
+// for compatibility with @whosydd/opencode-quota (MIT).
 import { createSignal } from "solid-js"
 
 export interface GoQuota {
@@ -8,15 +13,21 @@ export interface GoQuota {
   fetchedAt: number
 }
 
-interface GoConfig {
-  workspaceId: string
-  authCookie: string
+/** Default OpenCode Go API base; `/usage` is appended. */
+export const GO_API_BASE = "https://opencode.ai/zen/go/v1"
+
+interface GoCredentials {
+  apiKey?: string
+  workspaceId?: string
+  authCookie?: string
 }
 
-function readConfig(): GoConfig | undefined {
+function readConfig(): GoCredentials | undefined {
   const env = (globalThis as typeof globalThis & {
     process?: { env: Record<string, string | undefined> }
   }).process?.env
+  const apiKey = env?.OPENCODE_GO_API_KEY?.trim()
+  if (apiKey) return { apiKey }
   const workspaceId = env?.OPENCODE_GO_WORKSPACE_ID?.trim()
   const authCookie = env?.OPENCODE_GO_AUTH_COOKIE?.trim()
   if (!workspaceId || !authCookie) return undefined
@@ -30,7 +41,7 @@ interface WindowUsage {
   resetInSec: number
 }
 
-/** Thrown when the Go auth cookie is missing, expired, or rejected. */
+/** Thrown when the Go API key or auth cookie is missing, expired, or rejected. */
 export class QuotaAuthError extends Error {}
 
 function timeoutSignal(ms: number): AbortSignal | undefined {
@@ -38,9 +49,54 @@ function timeoutSignal(ms: number): AbortSignal | undefined {
   return typeof withTimeout.timeout === "function" ? withTimeout.timeout(ms) : undefined
 }
 
+const clampPercent = (value: number) => Math.max(0, Math.min(100, value))
+
 export async function fetchGoQuota(signal?: AbortSignal): Promise<GoQuota | undefined> {
   const config = readConfig()
   if (!config) return undefined
+  if (config.apiKey) return fetchQuotaFromApi(config.apiKey, signal)
+  return fetchQuotaFromCookie(config as Required<Pick<GoCredentials, "workspaceId" | "authCookie">>, signal)
+}
+
+/**
+ * Stable path: `GET /zen/go/v1/usage` with the provider API key. Returns rounded
+ * percents and ISO `resetsAt` timestamps for the rolling/weekly/monthly windows.
+ */
+async function fetchQuotaFromApi(apiKey: string, signal?: AbortSignal): Promise<GoQuota | undefined> {
+  const response = await fetch(`${GO_API_BASE}/usage`, {
+    headers: {
+      Accept: "application/json",
+      Authorization: `Bearer ${apiKey}`,
+    },
+    signal,
+  })
+  if (response.status === 401 || response.status === 403) {
+    throw new QuotaAuthError(`OpenCode Go API authentication failed (HTTP ${response.status})`)
+  }
+  if (!response.ok) throw new Error(`OpenCode Go API request failed with HTTP ${response.status}`)
+
+  let payload: unknown
+  try {
+    payload = await response.json()
+  } catch {
+    return undefined
+  }
+  const rolling = readObject(readObject(payload, "usage"), "rolling")
+  if (!rolling) return undefined
+  const percent = asNumber(rolling.percent)
+  if (percent === null) return undefined
+  return {
+    rollingPercentRemaining: clampPercent(100 - Math.round(percent)),
+    rollingResetInSec: secondsUntil(rolling.resetsAt),
+    fetchedAt: Date.now(),
+  }
+}
+
+/** Fallback path: scrape the workspace HTML page with the browser auth cookie. */
+async function fetchQuotaFromCookie(
+  config: { workspaceId: string; authCookie: string },
+  signal?: AbortSignal,
+): Promise<GoQuota | undefined> {
   const response = await fetch(
     `https://opencode.ai/workspace/${encodeURIComponent(config.workspaceId)}/go`,
     {
@@ -55,15 +111,34 @@ export async function fetchGoQuota(signal?: AbortSignal): Promise<GoQuota | unde
   if (response.status === 401 || response.status === 403) {
     throw new QuotaAuthError(`OpenCode Go authentication failed (HTTP ${response.status})`)
   }
+  // An expired session redirects to the OpenAuth login page instead of a 401,
+  // so treat the redirect as an auth failure rather than silently serving stale data.
+  if (response.redirected || /auth\.opencode\.ai|\/auth\//.test(response.url)) {
+    throw new QuotaAuthError("OpenCode Go session expired (redirected to login)")
+  }
   if (!response.ok) throw new Error(`OpenCode Go request failed with HTTP ${response.status}`)
   const html = await response.text()
   const rolling = extractWindow(html, "rollingUsage")
   if (!rolling) return undefined
   return {
-    rollingPercentRemaining: Math.max(0, Math.min(100, 100 - rolling.quotaPercent)),
+    rollingPercentRemaining: clampPercent(100 - rolling.quotaPercent),
     rollingResetInSec: rolling.resetInSec,
     fetchedAt: Date.now(),
   }
+}
+
+function readObject(value: unknown, key: string): Record<string, unknown> | null {
+  if (typeof value !== "object" || value === null) return null
+  const nested = (value as Record<string, unknown>)[key]
+  return typeof nested === "object" && nested !== null ? (nested as Record<string, unknown>) : null
+}
+
+/** Seconds until an ISO timestamp, clamped at zero. Unknown timestamps read as 0. */
+function secondsUntil(value: unknown): number {
+  if (typeof value !== "string") return 0
+  const at = Date.parse(value)
+  if (!Number.isFinite(at)) return 0
+  return Math.max(0, Math.round((at - Date.now()) / 1000))
 }
 
 function extractWindow(html: string, fieldName: string): WindowUsage | null {
@@ -187,7 +262,7 @@ export function createQuotaStore(refreshMs = 120_000, timeoutMs = 15_000): {
       if (value) setQuota(value)
     } catch (error) {
       // Keep the last value on transient/network/timeout errors, but drop it
-      // when authentication fails so an expired cookie is visible.
+      // when authentication fails so an expired credential is visible.
       if (error instanceof QuotaAuthError) setQuota(undefined)
     } finally {
       inFlight = false

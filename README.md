@@ -24,16 +24,28 @@ output price.
 
 ## Quota
 
-The battery reads your OpenCode Go credentials from the environment (same
-variables as `@whosydd/opencode-quota`):
+The battery prefers the **OpenCode Go API key** and the JSON endpoint
+`GET https://opencode.ai/zen/go/v1/usage`. The key is read automatically from
+the running provider state or from `auth.json` (`opencode auth login`), and it
+is long-lived — unlike the browser `auth` cookie, which expires after a few
+days and used to blank the battery.
+
+Optionally override the key explicitly:
+
+```bash
+export OPENCODE_GO_API_KEY="sk-..."
+```
+
+Fallback (legacy, same variables as `@whosydd/opencode-quota`): scrape the
+workspace page with the browser session cookie.
 
 ```bash
 export OPENCODE_GO_WORKSPACE_ID="wrk_..."
 export OPENCODE_GO_AUTH_COOKIE="Fe26.2**..."
 ```
 
-Without them the indicator falls back to the model's output price. The values
-are the ones from your browser session on <https://opencode.ai/auth>.
+Without any credential the battery shows `—` and the widget still shows the
+model's output price.
 
 ## Install
 
